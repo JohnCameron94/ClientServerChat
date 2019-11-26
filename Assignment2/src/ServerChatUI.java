@@ -5,6 +5,8 @@ import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.net.Socket;
 
 import javax.swing.JButton;
@@ -17,15 +19,14 @@ import javax.swing.JTextField;
 import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 import javax.swing.border.TitledBorder;
-
-
+//TODO
 /**
  * @author Johnathon Cameron
  * @version 1.5
  * @see SeverChatUI
  * @since 1.8 (Java 8)
  */
-public class ServerChatUI extends JFrame {
+public class ServerChatUI extends JFrame implements Accessible{
 
 	/**
 	 * {@value #serialVersionUID} final String used to set the error message on the
@@ -37,14 +38,37 @@ public class ServerChatUI extends JFrame {
 	 */
 	private Controller ctrl = new Controller();
 	
-	
+	/**
+	 * JTextField used to write a message in the chat
+	 */
+	private JTextField message;
+	/**
+	 * JButtton used to send the message on the chat
+	 */
+	private JButton sendButton;
+	/**
+	 * JTextArea used to display the chat
+	 */
+	private JTextArea display;
+	/**
+	 * Output stream used to output the message through the connections
+	 */
+	private ObjectOutputStream outputStream;
+	/**
+	 * Socket object used to maintain the socket connection
+	 */
+	private Socket socket;
+	/**
+	 * ConnectionWrapper
+	 */
+	private ConnectionWrapper connection;
 	/**
 	 *@author Johnathon Cameron 
 	 *Purpose: Constructor of ServerChatUI used to set the sockety class
 	 *set the frame to create the server UI and also to run the client UI
 	 */
 	public ServerChatUI(Socket socket) {
-		socket = new Socket();
+		this.socket = socket;
 		setFrame(createUI());
 		runClient();
 	}
@@ -74,11 +98,11 @@ public class ServerChatUI extends JFrame {
 	    //set Host Panel borders
 		msgPanel.setBorder(msgTitle);
 		//Txt area for user to write message
-		JTextField msgTxt = new JTextField("Type Message",41);
+	    message = new JTextField("Type Message",41);
 		//Setting text alignment to left
-		msgTxt.setHorizontalAlignment(JTextField.LEFT);
+		message.setHorizontalAlignment(JTextField.LEFT);
 		//Send button
-		JButton sendButton = new JButton("Send");
+		sendButton = new JButton("Send");
 		//setting preferred size
 		sendButton.setPreferredSize(new Dimension(80,19));
 		//Setting mnemonic
@@ -86,7 +110,7 @@ public class ServerChatUI extends JFrame {
 		//disabled at launch
 		sendButton.setEnabled(true);
 		//adding to Panel that holds components
-		msgPanel.add(msgTxt);
+		msgPanel.add(message);
 		//adding the button
 		msgPanel.add(sendButton);
 		
@@ -109,10 +133,10 @@ public class ServerChatUI extends JFrame {
 	    //set Host Panel borders
 		chatDisplay.setBorder(chatTitle);
 		//Display components
-		JTextArea chatText = new JTextArea(30,45);
+	    display = new JTextArea(30,45);
 		//add to inner panel
-		innerPanel.add(chatText);
-		chatText.setEditable(false);
+		innerPanel.add(display);
+		display.setEditable(false);
 		//Scroll bar panel
 		JScrollPane scrollBarPane = new JScrollPane(innerPanel,
 				JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
@@ -129,6 +153,29 @@ public class ServerChatUI extends JFrame {
 		//return content Pane
 		return serverPane;
 		
+	}
+	
+
+	@Override
+	public JTextArea getDisplay() {
+		return display;
+	}
+
+
+	@Override
+	public void closeChat() {
+		//try to close connection
+			//if connection is not closed, close it
+			try {
+				//attempt to close connection
+				connection.closeConnection();
+				//dispose of the frame
+				dispose();
+			} catch (IOException e) {
+				//print in command prompt if exceptions are thrown.
+				System.out.println("Failed close Connection");
+				e.printStackTrace();
+			}
 	}
 	
 	/**
@@ -149,8 +196,26 @@ public class ServerChatUI extends JFrame {
 	 *Purpose: Method that is going to be implemented in part 2 of the assignment
 	 */
 	private void runClient() {
+		this.connection = new ConnectionWrapper(this.socket);
+		try {
+			this.connection.createStreams();
+			this.outputStream =connection.getOutputStream();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		//creating runnable object (ChatRunnable)
+		Runnable runnable = new ChatRunnable(this,connection);
+		
+		//creating threads 
+		Thread thread = new Thread(runnable);
+		//starting thread
+		thread.start();
 		
 	}
+	
+	
 	
 	/**
 	 * @author Johnathon Cameron
@@ -182,6 +247,4 @@ public class ServerChatUI extends JFrame {
 		}
 		
 	}
-	
-
 }
