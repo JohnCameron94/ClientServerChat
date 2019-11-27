@@ -17,7 +17,7 @@ public class Client {
 	 * @param args Main Displays and creates the client chat ui
 	 */
 	public static void main(String[] args) {
-
+		//Testing if I can push
 		EventQueue.invokeLater(new Runnable() {
 			@Override
 			public void run() {
