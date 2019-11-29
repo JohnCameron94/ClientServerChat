@@ -2,7 +2,7 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import javax.swing.JFrame;
-//TODO Test
+
 /**
  * @author Johnathon Cameron
  * @version 1.5
@@ -18,7 +18,7 @@ public class Server {
 	 *Purpose: Method used to lauch the Server GUI
 	 */
 	public static void launchClient(String title, Socket socket) {
-		JFrame frame = new ServerChatUI(null);
+		JFrame frame = new ServerChatUI(socket);
 		frame.setTitle(title);
 		frame.pack();
 		frame.setLocationRelativeTo(null);
@@ -66,19 +66,21 @@ public class Server {
 			try {
 				//accepting new connection
 				Socket socket = server.accept();
-				
-				if(socket.getSoLinger()!= -1) socket.setSoLinger(true,5);
-				if(!socket.getTcpNoDelay()) socket.setTcpNoDelay(true);
-				
-				//print socket info to console
-				System.out.printf("Connecting to a client Socket[addr=%s, port=%d, localport=%d]\n",
-	                    socket.getInetAddress(), socket.getPort(), socket.getLocalPort());
-				//increment friend variable
-				friend ++;
-				//declaring final string
-				final String title = "Johnathon's Friend" + friend;
-				//launching client
-				launchClient(title,socket);
+
+				if(socket != null) {
+					if (socket.getSoLinger() != -1) socket.setSoLinger(true, 5);
+					if (!socket.getTcpNoDelay()) socket.setTcpNoDelay(true);
+
+					//print socket info to console
+					System.out.printf("Connecting to a client Socket[addr=%s, port=%d, localport=%d]\n",
+							socket.getInetAddress(), socket.getPort(), socket.getLocalPort());
+					//increment friend variable
+					friend++;
+					//declaring final string
+					final String title = "Johnathon's Friend" + friend;
+					//launching client
+					launchClient(title, socket);
+				}
 			} catch (IOException e) {
 				System.out.println("Failed To Accept new Connection "+e);
 			}

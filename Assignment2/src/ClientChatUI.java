@@ -1,14 +1,12 @@
 import java.awt.BorderLayout;
-import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
-import java.awt.GridBagLayout;
-import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.net.InetAddress;
@@ -16,6 +14,7 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.UnknownHostException;
+import java.util.Objects;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -30,14 +29,14 @@ import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 import javax.swing.border.TitledBorder;
 
-//TODO
+
 /**
  * @author Johnathon Cameron
  * @version 1.5
  * @see Client
  * @since 1.8 (Java 8)
  */
-public class ClientChatUI extends JFrame {
+public class ClientChatUI extends JFrame implements Accessible {
 
 	/**
 	 * {@value #serialVersionUID} final String used to set the error message on the
@@ -45,7 +44,7 @@ public class ClientChatUI extends JFrame {
 	 */
 	private static final long serialVersionUID = 1L;
 	/**
-	 * {@value #PORTS} final String used to set the error message on the calculator
+	 * {@value } final String used to set the error message on the calculator
 	 * for any NaN errors
 	 */
 	private final String[] PORTS = { " ", "8089", "6500", "65535" };
@@ -83,6 +82,15 @@ public class ClientChatUI extends JFrame {
 	private Controller ctrl = new Controller();
 
 	/**
+	 * Gets the display field
+	 * @return the display field
+	 */
+	@Override
+	public JTextArea getDisplay() {
+		return this.display;
+	}
+
+	/**
 	 * @author Johnathon Cameron Constructor used set the frame title and run the
 	 *         client GUI
 	 */
@@ -93,6 +101,11 @@ public class ClientChatUI extends JFrame {
 
 	}
 
+	/**
+	 * If the socket is not closed the method tries to close the connection. Then it calls
+	 * enableConnectButton()
+	 */
+	@Override
 	public void closeChat() {
 		// try to close connection
 		// if connection is not closed, close it
@@ -321,6 +334,20 @@ public class ClientChatUI extends JFrame {
 	 */
 	private class WindowController extends WindowAdapter {
 
+		/**
+		 * The method using the outputStream tries to write the following object:
+		 * ChatProtocolConstants.CHAT_TERMINATOR
+		 * If exception occurs it calls System.exit(0); otherwise it calls System.exit(0).
+		 * @param e the window event
+		 */
+		@Override
+		public void windowClosing(WindowEvent e) {
+			try {
+				outputStream.writeObject(ChatProtocolConstants.CHAT_TERMINATOR);
+			} catch(IOException ioe) {
+				System.exit(0);
+			}
+		}
 	}
 
 	/**
@@ -332,44 +359,50 @@ public class ClientChatUI extends JFrame {
 	private class Controller implements ActionListener {
 
 		/**
-		 * @param ActionEvent
-		 *            Method used to perform a action event depending on what the user
-		 *            clicks(send button)
+		 * @param ace
+		 * Method used to perform a action event depending on what the user clicks(send button)
 		 */
 		@Override
 		public void actionPerformed(ActionEvent ace) {
 			//TODO Check for RunTime error
-					boolean connected = false;
-					String host;
-					int port = 0;
-					
-					if(ace.getActionCommand()== "C"){
-						host = hostTxt.getText();
-						port = Integer.parseInt(portBox.getSelectedItem().toString());
-						
-						connected = connect(host,port);
-						if(!connected) return;
-							connButton.setEnabled(false);
-							connButton.setBackground(Color.BLUE);
-							sendButton.setEnabled(true);
-							message.setRequestFocusEnabled(true);
-							
-							//Runnable runnable = new ChatRunnable(,connection);
-							//Thread thread = new Thread(runnable);
-							//thread.start();
-							
-						
-						
-					}else if(ace.getActionCommand() == "S") {
-						send();
-					}
-					
-					
+			boolean connected = false;
+			String host;
+			int port = 0;
 
+			if (ace.getActionCommand() == "C") {
+				host = hostTxt.getText();
+				port = Integer.parseInt(Objects.requireNonNull(portBox.getSelectedItem()).toString());
+
+				connected = connect(host, port);
+				if (!connected) return;
+				connButton.setEnabled(false);
+				connButton.setBackground(Color.BLUE);
+				sendButton.setEnabled(true);
+				message.setRequestFocusEnabled(true);
+
+				Runnable runnable = new ChatRunnable(ClientChatUI.this, connection);
+				Thread thread = new Thread(runnable);
+				thread.start();
+
+			} else if (ace.getActionCommand() == "S") {
+				send();
+			}
 		}
 
+		/**
+		 * The method gets the text from the message text field assigns it to a local variable
+		 * sendMessage, appends it to the display adding a line terminator, and then uses the
+		 * outputStream to write an String
+		 */
 		private void send() {
-
+			String sendMessage = message.getText();
+			display.append(sendMessage + '\n');
+			try {
+				outputStream.writeObject(ChatProtocolConstants.DISPLACMENT + sendMessage + ChatProtocolConstants.LINE_TERMINATOR);
+			} catch(IOException ioe) {
+				enableConnectButton();
+				display.append(ioe.getMessage() + '\n');
+			}
 		}
 
 		private boolean connect(String host, int port) {

@@ -1,3 +1,4 @@
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -16,33 +17,37 @@ import javax.swing.JTextArea;
 public class ChatRunnable<T extends JFrame & Accessible> implements Runnable {
 
 	/**
-	 * {@value #ui} final Generic T used to hold the user interface of the Chat UI
+	 * final Generic T used to hold the user interface of the Chat UI
 	 */
 	private final T ui;
+
 	/**
-	 * {@value #socket} final Socket Object used to hold the
+	 * final Socket Object used to hold the
 	 * TCP connection of the current user session.
 	 */
 	private final Socket socket;
+
 	/**
-	 * {@value #inputStream} final ObjectInputStream used to hold the 
+	 * final ObjectInputStream used to hold the
 	 * sockets input stream
 	 */
 	private final ObjectInputStream inputStream;
+
 	/**
-	 * {@value #outputStream} final ObjectOutputStream used to hold the 
+	 * final ObjectOutputStream used to hold the
 	 * sockets output stream
 	 */
 	private final ObjectOutputStream outputStream;
+
 	/**
-	 * {@value #display} final JTxtArea used to hold the current users chat display 
+	 * final JTxtArea used to hold the current users chat display
 	 */
 	private final JTextArea display;
 	
 	/**
 	 * @author Johnathon Cameron and Andrew Palmer
-	 * @param T
-	 * @param ConnectionWrapper
+	 * @param ui the generic type
+	 * @param connection the connection wrapper
 	 * The constructor uses the connection parameter and its get methods to initialize the
 	 * socket, inputStream, and outputStream fields. It uses the ui parameter to initialize the
 	 * display and the ui fields.
@@ -59,6 +64,7 @@ public class ChatRunnable<T extends JFrame & Accessible> implements Runnable {
 		// instantiate the JTextArea field display
 		this.display = ui.getDisplay();
 	}
+
 	/**
 	 * @author Johnathon Cameron and Andrew Palmer
 	 * Used to implement the run() method in the Class Runnable.
@@ -84,7 +90,11 @@ public class ChatRunnable<T extends JFrame & Accessible> implements Runnable {
 
 			// Reading String from object
 			try {
-				strin = (String) this.inputStream.readObject();
+				try {
+					strin = (String) this.inputStream.readObject();
+				} catch(EOFException eof) {
+					//handle EOFException
+				}
 
 				if (strin.trim() == ChatProtocolConstants.CHAT_TERMINATOR) {
 					// final String if line terminator is reached
@@ -97,10 +107,7 @@ public class ChatRunnable<T extends JFrame & Accessible> implements Runnable {
 				}
 
 			//if any exception are caught break loop	
-			} catch (ClassNotFoundException e) {
-				e.printStackTrace();
-				break;
-			} catch (IOException e) {
+			} catch (ClassNotFoundException | IOException e) {
 				e.printStackTrace();
 				break;
 			}
@@ -117,8 +124,7 @@ public class ChatRunnable<T extends JFrame & Accessible> implements Runnable {
 			String errstrm = ChatProtocolConstants.DISPLACMENT.getClass().getName() + "+"
 					+ ChatProtocolConstants.CHAT_TERMINATOR.getClass().getName()
 					+ ChatProtocolConstants.LINE_TERMINATOR.getClass().getName();
-			
-			
+
 			try {
 				//Writing string object to output stream 
 				this.outputStream.writeObject(errstrm);
@@ -129,7 +135,6 @@ public class ChatRunnable<T extends JFrame & Accessible> implements Runnable {
 		}
 		// closing chat
 		ui.closeChat();
-
 	}
 
 }

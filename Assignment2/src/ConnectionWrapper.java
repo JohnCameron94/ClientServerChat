@@ -2,7 +2,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
-//TODO test
+
 /**
  * @author Johnathon Cameron and Andrew Palmer
  * @version 1.0
@@ -26,7 +26,7 @@ public class ConnectionWrapper {
 	
 	/**
 	 * @author Johnathon Cameron and Andrew Palmer
-	 * @param Socket 
+	 * @param socket
 	 * Constructor initializing the Socket field to the Socket parameter
 	 */
 	public ConnectionWrapper(Socket socket) {	
@@ -69,7 +69,7 @@ public class ConnectionWrapper {
      * reference.
 	 */
 	public ObjectInputStream createObjectIStreams() throws IOException{
-		this.inputStream = (ObjectInputStream) socket.getInputStream();
+		this.inputStream = new ObjectInputStream(socket.getInputStream());
 		return this.inputStream;
 	}
 	
@@ -83,7 +83,7 @@ public class ConnectionWrapper {
      * outputStream reference.
 	 */
 	public ObjectOutputStream createObjectOStreams() throws IOException{
-		this.outputStream = (ObjectOutputStream) this.socket.getOutputStream();
+		this.outputStream = new ObjectOutputStream(this.socket.getOutputStream());
 		return this.outputStream;
 	}
 	
@@ -97,8 +97,8 @@ public class ConnectionWrapper {
 	 */
 	public void createStreams() throws IOException{
 		//TODO not sure if this is how it is done
-		this.outputStream = new ObjectOutputStream(this.socket.getOutputStream());
-		this.inputStream = new ObjectInputStream(this.socket.getInputStream());
+		this.outputStream = createObjectOStreams();
+		this.inputStream = createObjectIStreams();
 	}
 	
 	/**
