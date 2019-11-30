@@ -61,7 +61,6 @@ public class Server {
 		
 		//endless loop
 		while(true) {
-			System.out.println("Waiting For client Request");
 			//server.accept returns socket onces connection is found.
 			try {
 				//accepting new connection
@@ -84,8 +83,8 @@ public class Server {
 			} catch (IOException e) {
 				System.out.println("Failed To Accept new Connection "+e);
 			}
-			
 		}
+		
 	}
 }
 

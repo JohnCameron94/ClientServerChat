@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import javax.swing.JFrame;
 import javax.swing.JTextArea;
+
 //TODO test
 /**
  * @author Johnathon Cameron and Andrew Palmer
@@ -22,20 +23,18 @@ public class ChatRunnable<T extends JFrame & Accessible> implements Runnable {
 	private final T ui;
 
 	/**
-	 * final Socket Object used to hold the
-	 * TCP connection of the current user session.
+	 * final Socket Object used to hold the TCP connection of the current user
+	 * session.
 	 */
 	private final Socket socket;
 
 	/**
-	 * final ObjectInputStream used to hold the
-	 * sockets input stream
+	 * final ObjectInputStream used to hold the sockets input stream
 	 */
 	private final ObjectInputStream inputStream;
 
 	/**
-	 * final ObjectOutputStream used to hold the
-	 * sockets output stream
+	 * final ObjectOutputStream used to hold the sockets output stream
 	 */
 	private final ObjectOutputStream outputStream;
 
@@ -43,14 +42,14 @@ public class ChatRunnable<T extends JFrame & Accessible> implements Runnable {
 	 * final JTxtArea used to hold the current users chat display
 	 */
 	private final JTextArea display;
-	
+
 	/**
 	 * @author Johnathon Cameron and Andrew Palmer
-	 * @param ui the generic type
-	 * @param connection the connection wrapper
-	 * The constructor uses the connection parameter and its get methods to initialize the
-	 * socket, inputStream, and outputStream fields. It uses the ui parameter to initialize the
-	 * display and the ui fields.
+	 * @param ui         the generic type
+	 * @param connection the connection wrapper The constructor uses the connection
+	 *                   parameter and its get methods to initialize the socket,
+	 *                   inputStream, and outputStream fields. It uses the ui
+	 *                   parameter to initialize the display and the ui fields.
 	 */
 	public ChatRunnable(T ui, ConnectionWrapper connection) {
 		// instantiate the socket connection
@@ -66,15 +65,15 @@ public class ChatRunnable<T extends JFrame & Accessible> implements Runnable {
 	}
 
 	/**
-	 * @author Johnathon Cameron and Andrew Palmer
-	 * Used to implement the run() method in the Class Runnable.
-	 * Implements a endless loop while the input/output stream and 
-	 * sockets are open, reading the input and appending the outputstream 
-	 * to the ui display. If at anytime the loop breaks and the socket is not closed it 
-	 * will output the error stream string.
+	 * @author Johnathon Cameron and Andrew Palmer Used to implement the run()
+	 *         method in the Class Runnable. Implements a endless loop while the
+	 *         input/output stream and sockets are open, reading the input and
+	 *         appending the outputstream to the ui display. If at anytime the loop
+	 *         breaks and the socket is not closed it will output the error stream
+	 *         string.
 	 */
 	@Override
-	public void run() {
+	public  void run() {
 		// Local Date time assigned to the current date and time
 		LocalDateTime dT = LocalDateTime.now();
 		// date and time formatter to example: October 31, 8:00 AM
@@ -82,21 +81,18 @@ public class ChatRunnable<T extends JFrame & Accessible> implements Runnable {
 		// input string
 		String strin = "";
 
-		//endless loop
+		// endless loop
 		while (true) {
-
-			// if socket isClosed break loop
-			if (socket.isClosed()) break;
 
 			// Reading String from object
 			try {
-				try {
-					strin = (String) this.inputStream.readObject();
-				} catch(EOFException eof) {
-					//handle EOFException
-				}
+				if (socket.isClosed())
+					break;
+				strin =(String) this.inputStream.readObject();
 
-				if (strin.trim() == ChatProtocolConstants.CHAT_TERMINATOR) {
+				// handle EOFException
+
+				if (strin.trim().equals(ChatProtocolConstants.CHAT_TERMINATOR)) {
 					// final String if line terminator is reached
 					final String terminate = ChatProtocolConstants.DISPLACMENT + dT.format(fmt)
 							+ ChatProtocolConstants.LINE_TERMINATOR + strin;
@@ -105,28 +101,34 @@ public class ChatRunnable<T extends JFrame & Accessible> implements Runnable {
 					// break endless loop
 					break;
 				}
-
-			//if any exception are caught break loop	
-			} catch (ClassNotFoundException | IOException e) {
-				e.printStackTrace();
-				break;
-			}
-			//if strin.trim() is not = to CHAT_TERMINATOR
+				
+		
+			// if strin.trim() is not = to CHAT_TERMINATOR
 			final String append = ChatProtocolConstants.DISPLACMENT + dT.format(fmt)
 					+ ChatProtocolConstants.LINE_TERMINATOR + strin;
 			this.display.append(append);
+			
+			} catch (EOFException eof) {
+				//System.out.println("EOF end of file stream");
+				break;
+				// if any exception are caught break loop
+			} catch (ClassNotFoundException | IOException e) {
+				break;
+			}
+			
 
 		}
 
-		//if loop breaks and socket is not closed write to output stream
+		// if loop breaks and socket is not closed write to output stream
 		if (!this.socket.isClosed()) {
-			//String object
-			String errstrm = ChatProtocolConstants.DISPLACMENT.getClass().getName() + "+"
-					+ ChatProtocolConstants.CHAT_TERMINATOR.getClass().getName()
-					+ ChatProtocolConstants.LINE_TERMINATOR.getClass().getName();
+			// String object
+			String errstrm = ChatProtocolConstants.DISPLACMENT
+					+ ChatProtocolConstants.CHAT_TERMINATOR
+					+ ChatProtocolConstants.LINE_TERMINATOR;
 
 			try {
-				//Writing string object to output stream 
+				// Writing string object to output stream
+				
 				this.outputStream.writeObject(errstrm);
 			} catch (IOException e) {
 				e.printStackTrace();

@@ -5,6 +5,7 @@ import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
@@ -39,6 +40,7 @@ public class ServerChatUI extends JFrame implements Accessible {
 	 */
 	private Controller ctrl = new Controller();
 	
+	private WindowController windowCtrl = new WindowController();
 	/**
 	 * JTextField used to write a message in the chat
 	 */
@@ -68,6 +70,7 @@ public class ServerChatUI extends JFrame implements Accessible {
 	 * ConnectionWrapper
 	 */
 	private ConnectionWrapper connection;
+	
 
 	/**
 	 *@author Johnathon Cameron 
@@ -183,10 +186,11 @@ public class ServerChatUI extends JFrame implements Accessible {
 				//attempt to close connection
 				connection.closeConnection();
 				//dispose of the frame
-				dispose();
+				windowCtrl.windowClosed();//print ServerChatUI Closed
+				ServerChatUI.this.dispose();
 			} catch (IOException e) {
 				//print in command prompt if exceptions are thrown.
-				System.out.println("Failed close Connection");
+				System.out.println("Failed to close Connection");
 				e.printStackTrace();
 			}
 	}
@@ -197,10 +201,11 @@ public class ServerChatUI extends JFrame implements Accessible {
 	 *of the server UI
 	 */
 	public final void setFrame(JPanel contentPane) {
-		setContentPane(contentPane);
-		setResizable(false);
-		setPreferredSize(new Dimension(588,500));
-		addWindowListener(new WindowController());
+		this.setContentPane(contentPane);
+		this.setResizable(false);
+		this.setPreferredSize(new Dimension(588,500));
+		this.addWindowListener(windowCtrl);
+		
 	}
 	
 	
@@ -214,8 +219,7 @@ public class ServerChatUI extends JFrame implements Accessible {
 			this.connection.createStreams();
 			this.outputStream =connection.getOutputStream();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			//System.out.println("IO Exception e.getMessage());
 		}
 		
 		//creating runnable object (ChatRunnable)
@@ -241,18 +245,20 @@ public class ServerChatUI extends JFrame implements Accessible {
 		 * finally clause of the try-catch statement it disposes the frame. Then using the connection it tries to close
 		 * the connection. If an exception occurs, in the finally clause of the try-catch statement it disposes the frame
 		 */
-		public void windowClosing() {
+		@Override
+		public void windowClosing(WindowEvent event) {
 			Boolean errorWritingObject = false;
 			Boolean errorClosingConn = false;
-			System.out.println("ServerUI Window closing!");
+			windowClosed();
 
 			try {
+				if(outputStream != null)
 				outputStream.writeObject(ChatProtocolConstants.DISPLACMENT + ChatProtocolConstants.CHAT_TERMINATOR + ChatProtocolConstants.LINE_TERMINATOR);
 			} catch(IOException ioe) {
 				errorWritingObject = true;
 			} finally {
 				if(errorWritingObject) {
-					dispose(); //If an exception occurs during the writing, in the finally clause of the try-catch statement it disposes the frame.
+				 ServerChatUI.this.dispose(); //If an exception occurs during the writing, in the finally clause of the try-catch statement it disposes the frame.
 				}
 			}
 
@@ -263,9 +269,10 @@ public class ServerChatUI extends JFrame implements Accessible {
 				errorClosingConn = true;
 			} finally {
 				if (errorClosingConn) {
-					dispose();
+					ServerChatUI.this.dispose();
 				}
 			}
+			ServerChatUI.this.dispose();
 			System.out.println("Chat closed!");
 			System.exit(0);
 		}

@@ -56,11 +56,19 @@ public class ClientChatUI extends JFrame implements Accessible {
 	 * JButtton used to send the message on the chat
 	 */
 	private JButton sendButton;
-
+	
+	/**
+	 *JButton used to connect to the Server 
+	 */
 	private JButton connButton;
-
+	
+	/**
+	 * JTextField used to enter host text value
+	 */
 	private JTextField hostTxt;
-
+	/**
+	 * JComboBox of type string used for the ports
+	 */
 	private JComboBox<String> portBox;
 	/**
 	 * JTextArea used to display the chat
@@ -78,7 +86,9 @@ public class ClientChatUI extends JFrame implements Accessible {
 	 * ConnectionWrapper
 	 */
 	private ConnectionWrapper connection;
-
+	/**
+	 * Controller object from inner class
+	 */
 	private Controller ctrl = new Controller();
 
 	/**
@@ -343,7 +353,8 @@ public class ClientChatUI extends JFrame implements Accessible {
 		@Override
 		public void windowClosing(WindowEvent e) {
 			try {
-				outputStream.writeObject(ChatProtocolConstants.CHAT_TERMINATOR);
+				//output stream will never be initialized until the server is started, check for null pointer
+				if(outputStream !=null) outputStream.writeObject(ChatProtocolConstants.CHAT_TERMINATOR);
 			} catch(IOException ioe) {
 				System.exit(0);
 			}
@@ -423,9 +434,8 @@ public class ClientChatUI extends JFrame implements Accessible {
 				if(!socket.getTcpNoDelay()) socket.setTcpNoDelay(true);
 				
 				//creating final string connection
-				final String append = "Connecting to a client Socket[addr=%s, port=%d, localport=%d]\n"+
-	                    socket.getInetAddress()+ socket.getPort() +socket.getLocalPort();
-				
+				final String append = "Connecting to a client Socket ["+socket.getInetAddress()+",port= "+socket.getPort()+", localport="+socket.getLocalPort() +"]\n";
+	                   
 				//append to display
 				display.append(append);
 				//creating new connection wrapper of socket reference
@@ -439,9 +449,9 @@ public class ClientChatUI extends JFrame implements Accessible {
 				
 				//catch any thrown exception IO or unknown host
 			} catch (UnknownHostException unknownHost) {
-				System.out.println("Host not Found "+unknownHost.getMessage());
+				display.append("ERROR: Connection Refused: server is not available. Check port or restart server");
 			} catch (IOException io) {
-				System.out.println("I/O Error" + io.getMessage());
+				display.append("ERROR: Connection Refused: server is not available. Check port or restart server");
 			}
 			
 			

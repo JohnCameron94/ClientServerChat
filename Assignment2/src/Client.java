@@ -29,7 +29,6 @@ public class Client {
 				frame.setResizable(false);
 				frame.setVisible(true);
 			}
-
 		});
 	}
 }
